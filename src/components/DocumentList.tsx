@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Trash2, Eye, Loader2 } from "lucide-react";
+import { FileText, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import DocumentAnalysis from "./DocumentAnalysis";
 
 interface Document {
   id: string;
@@ -24,12 +18,18 @@ interface Document {
 
 interface DocumentListProps {
   refreshTrigger: number;
+  onDocumentSelect: (doc: Document | null) => void;
 }
 
-const DocumentList = ({ refreshTrigger }: DocumentListProps) => {
+const DocumentList = ({ refreshTrigger, onDocumentSelect }: DocumentListProps) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+
+  const handleSelectDocument = (doc: Document) => {
+    setSelectedDoc(doc);
+    onDocumentSelect(doc);
+  };
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -90,85 +90,48 @@ const DocumentList = ({ refreshTrigger }: DocumentListProps) => {
   }
 
   return (
-    <>
-      <div className="grid gap-4">
+    <div className="space-y-4">
+      <div className="grid gap-3">
         {documents.map((doc) => (
-          <Card key={doc.id} className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-4 flex-1">
-                <FileText className="h-8 w-8 text-primary flex-shrink-0" />
+          <Card 
+            key={doc.id} 
+            className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+              selectedDoc?.id === doc.id ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => handleSelectDocument(doc)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <FileText className="h-6 w-6 text-primary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg mb-1 truncate">{doc.filename}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
+                  <h3 className="font-semibold truncate">{doc.filename}</h3>
+                  <p className="text-xs text-muted-foreground">
                     {formatFileSize(doc.file_size)} • {new Date(doc.created_at).toLocaleDateString()}
                   </p>
-                  {doc.analysis ? (
-                    <div className="mt-3 p-3 bg-secondary/50 rounded-md">
-                      <p className="text-sm font-medium mb-1">Analysis:</p>
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {doc.analysis}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-3 p-3 bg-muted/50 rounded-md flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <p className="text-sm text-muted-foreground">Analyzing...</p>
-                    </div>
-                  )}
                 </div>
               </div>
-              <div className="flex space-x-2 ml-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setSelectedDoc(doc)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleDelete(doc.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(doc.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </Card>
         ))}
       </div>
 
-      <Dialog open={!!selectedDoc} onOpenChange={() => setSelectedDoc(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedDoc?.filename}</DialogTitle>
-            <DialogDescription>
-              {selectedDoc && formatFileSize(selectedDoc.file_size)} • 
-              {selectedDoc && new Date(selectedDoc.created_at).toLocaleString()}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedDoc?.analysis && (
-              <div>
-                <h4 className="font-semibold mb-2">AI Analysis</h4>
-                <div className="p-4 bg-secondary/50 rounded-md">
-                  <p className="text-sm whitespace-pre-wrap">{selectedDoc.analysis}</p>
-                </div>
-              </div>
-            )}
-            <div>
-              <h4 className="font-semibold mb-2">Document Content</h4>
-              <div className="p-4 bg-muted/50 rounded-md">
-                <p className="text-sm whitespace-pre-wrap font-mono">
-                  {selectedDoc?.content.substring(0, 2000)}
-                  {selectedDoc && selectedDoc.content.length > 2000 && '...'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+      {selectedDoc && (
+        <div className="mt-6">
+          <h3 className="text-xl font-semibold mb-4">{selectedDoc.filename}</h3>
+          <DocumentAnalysis document={selectedDoc} />
+        </div>
+      )}
+    </div>
   );
 };
 

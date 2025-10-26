@@ -3,9 +3,21 @@ import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
+import ChatInterface from "@/components/ChatInterface";
+
+interface Document {
+  id: string;
+  filename: string;
+  file_type: string;
+  file_size: number;
+  content: string;
+  analysis: string | null;
+  created_at: string;
+}
 
 const Index = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   const handleDocumentUploaded = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -16,20 +28,21 @@ const Index = () => {
       <Navigation />
       <Hero />
       
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-5xl">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-2">Document Analysis</h2>
-            <p className="text-muted-foreground">
-              Upload your documents and let AI analyze them for you
-            </p>
-          </div>
-          
-          <div className="space-y-8">
-            <DocumentUpload onDocumentUploaded={handleDocumentUploaded} />
-            <div>
-              <h3 className="text-2xl font-semibold mb-4">Your Documents</h3>
-              <DocumentList refreshTrigger={refreshTrigger} />
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Upload & Documents */}
+            <div className="lg:col-span-2 space-y-6">
+              <DocumentUpload onDocumentUploaded={handleDocumentUploaded} />
+              <DocumentList 
+                refreshTrigger={refreshTrigger} 
+                onDocumentSelect={setSelectedDocument}
+              />
+            </div>
+
+            {/* Right Column: Chat */}
+            <div className="lg:col-span-1">
+              <ChatInterface documentContext={selectedDocument?.analysis || undefined} />
             </div>
           </div>
         </div>

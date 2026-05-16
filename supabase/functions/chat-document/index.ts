@@ -6,6 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 const createUserClient = (authHeader: string) =>
   createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
     global: {
@@ -15,19 +21,10 @@ const createUserClient = (authHeader: string) =>
     },
   });
 
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
-  let documentId: string | undefined;
-  let supabase: ReturnType<typeof createUserClient> | null = null;
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -35,7 +32,7 @@ serve(async (req) => {
       return jsonResponse({ error: "Missing authorization header." }, 401);
     }
 
-    supabase = createUserClient(authHeader);
+    const supabase = createUserClient(authHeader);
     const {
       data: { user },
       error: userError,
@@ -45,18 +42,15 @@ serve(async (req) => {
       return jsonResponse({ error: "Invalid demo session." }, 401);
     }
 
-    const body = await req.json();
-    documentId = body.documentId;
-    const content = String(body.content ?? "");
-    const filename = String(body.filename ?? "contract");
+    const { documentId, question } = await req.json();
 
-    if (!documentId || !content.trim()) {
-      return jsonResponse({ error: "Document id and content are required." }, 400);
+    if (!documentId || !String(question ?? "").trim()) {
+      return jsonResponse({ error: "Document id and question are required." }, 400);
     }
 
     const { data: document, error: documentError } = await supabase
       .from("documents")
-      .select("id")
+      .select("filename, content, analysis, analysis_status")
       .eq("id", documentId)
       .single();
 
@@ -64,10 +58,9 @@ serve(async (req) => {
       return jsonResponse({ error: "Document not found for this demo session." }, 404);
     }
 
-    await supabase
-      .from("documents")
-      .update({ analysis_status: "pending", analysis_error: null })
-      .eq("id", documentId);
+    if (document.analysis_status !== "completed") {
+      return jsonResponse({ error: "Document analysis is not complete yet." }, 409);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -86,11 +79,13 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You are Naja7, a careful contract review assistant for a portfolio demo. Analyze contract text in plain English. Always include sections titled: Summary, Key Clauses, Potential Risks, Important Dates or Obligations, Suggested Review Questions, and Not Legal Advice. Be concise, practical, and avoid claiming to be a lawyer.",
+              "You answer questions about one uploaded contract for a portfolio demo. Use only the provided document text and prior analysis. If the answer is not in the document, say that clearly. Do not provide legal advice.",
           },
           {
             role: "user",
-            content: `Analyze this contract named "${filename}". Use only the text below.\n\n${content.substring(0, 14000)}`,
+            content: `Document: ${document.filename}\n\nAnalysis:\n${document.analysis ?? ""}\n\nText:\n${String(
+              document.content ?? "",
+            ).substring(0, 12000)}\n\nQuestion: ${String(question).trim()}`,
           },
         ],
       }),
@@ -99,52 +94,16 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
-      }
-      if (response.status === 402) {
-        throw new Error("Payment required. Please add credits to continue.");
-      }
-
       throw new Error("AI gateway error.");
     }
 
     const data = await response.json();
-    const analysis = data.choices?.[0]?.message?.content?.trim();
+    const answer = data.choices?.[0]?.message?.content?.trim();
 
-    if (!analysis) {
-      throw new Error("AI returned an empty analysis.");
-    }
-
-    const { error: updateError } = await supabase
-      .from("documents")
-      .update({
-        analysis,
-        analysis_status: "completed",
-        analysis_error: null,
-      })
-      .eq("id", documentId);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return jsonResponse({ analysis });
+    return jsonResponse({ answer: answer || "I could not find a clear answer in this document." });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error in analyze-document function:", message);
-
-    if (supabase && documentId) {
-      await supabase
-        .from("documents")
-        .update({
-          analysis_status: "failed",
-          analysis_error: message,
-        })
-        .eq("id", documentId);
-    }
-
+    console.error("Error in chat-document function:", message);
     return jsonResponse({ error: message }, 500);
   }
 });

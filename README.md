@@ -1,73 +1,80 @@
-# Welcome to your Lovable project
+# Naja7 AI Contract Analyzer
 
-## Project info
+Naja7 is a portfolio demo for AI-assisted contract review. Visitors can upload a TXT, PDF, or DOCX contract, extract readable text in the browser, save the document to Supabase, generate an AI review, and ask document-specific questions.
 
-**URL**: https://lovable.dev/projects/cb86a394-283b-4efb-b538-d0ef83c72948
+This is a scanning and summarization tool for demos. It is not legal advice.
 
-## How can I edit this code?
+## Tech Stack
 
-There are several ways of editing your application.
+- Vite, React, TypeScript
+- Tailwind CSS and shadcn-ui
+- Supabase Auth, Postgres, RLS, and Edge Functions
+- Lovable AI Gateway with `google/gemini-2.5-flash`
+- `pdfjs-dist` and `mammoth` for browser document text extraction
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/cb86a394-283b-4efb-b538-d0ef83c72948) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Create a `.env` file with:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
 
-**Use GitHub Codespaces**
+Anonymous sign-ins must be enabled in Supabase Auth because the demo has no visible login screen.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Supabase Setup
 
-## What technologies are used for this project?
+Apply the migrations in `supabase/migrations`.
 
-This project is built with:
+Set Edge Function secrets:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+supabase secrets set LOVABLE_API_KEY=your_lovable_ai_gateway_key
+```
 
-## How can I deploy this project?
+Deploy functions:
 
-Simply open [Lovable](https://lovable.dev/projects/cb86a394-283b-4efb-b538-d0ef83c72948) and click on Share -> Publish.
+```sh
+supabase functions deploy analyze-document
+supabase functions deploy chat-document
+```
 
-## Can I connect a custom domain to my Lovable project?
+The functions require JWT verification and use the caller's anonymous session so each visitor can only access their own documents.
 
-Yes, you can!
+## Deployment
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Deploy the Vite app to Vercel and add these environment variables:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```sh
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+After deployment, update the portfolio project entry with:
+
+- GitHub: `https://github.com/najeeb101/aixnew`
+- Live: your Vercel deployment URL
+
+## Verification
+
+Run:
+
+```sh
+npm run build
+npm run lint
+```
+
+Manual checks:
+
+- TXT, PDF, and DOCX uploads extract readable text.
+- Unsupported files and files over 5MB are rejected.
+- Empty, scanned, encrypted, or unreadable files show helpful errors.
+- Analysis moves through pending, completed, or failed states.
+- Chat only works after selecting an analyzed document.
+- A different anonymous browser session cannot see the previous session's documents.

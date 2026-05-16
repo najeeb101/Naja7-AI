@@ -10,7 +10,7 @@ const Hero = () => {
         </h1>
         
         <p className="text-lg sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-          Upload your PDF and Word documents to extract, analyze, and understand contract content with AI-powered insights.
+          Upload TXT, PDF, and DOCX contracts to extract readable text, summarize key clauses, and surface AI-powered review questions.
         </p>
       </div>
     </section>

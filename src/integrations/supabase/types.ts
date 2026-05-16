@@ -17,6 +17,8 @@ export type Database = {
       documents: {
         Row: {
           analysis: string | null
+          analysis_error: string | null
+          analysis_status: string
           content: string | null
           created_at: string
           file_size: number
@@ -24,10 +26,12 @@ export type Database = {
           filename: string
           id: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           analysis?: string | null
+          analysis_error?: string | null
+          analysis_status?: string
           content?: string | null
           created_at?: string
           file_size: number
@@ -35,10 +39,12 @@ export type Database = {
           filename: string
           id?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           analysis?: string | null
+          analysis_error?: string | null
+          analysis_status?: string
           content?: string | null
           created_at?: string
           file_size?: number
@@ -46,7 +52,7 @@ export type Database = {
           filename?: string
           id?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

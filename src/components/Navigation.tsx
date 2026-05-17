@@ -8,8 +8,8 @@ const Navigation = () => {
           <div className="flex items-center">
             <img src={logo} alt="NAJA7" className="h-10 w-auto" />
           </div>
-          
-          <div className="text-sm text-muted-foreground">
+
+          <div className="hidden text-sm text-muted-foreground sm:block">
             AI contract review demo
           </div>
         </div>

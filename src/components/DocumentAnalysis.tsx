@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, BarChart3, FileCode, FileText, Loader2, Scale } from "lucide-react";
+import { AlertCircle, BarChart3, FileArchive, FileCode, FileText, Loader2, Scale } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -19,7 +19,11 @@ const DocumentAnalysis = ({ document }: DocumentAnalysisProps) => {
   const content = document.content ?? "";
   const words = content.split(/\s+/).filter((word) => word.length > 0).length;
   const characters = content.length;
-  const approxPages = Math.max(1, Math.floor(content.split("\n").length / 40) + 1);
+  const approxPages = Math.max(1, Math.ceil(words / 450));
+  const fileSize =
+    document.file_size < 1024 * 1024
+      ? `${(document.file_size / 1024).toFixed(1)} KB`
+      : `${(document.file_size / (1024 * 1024)).toFixed(1)} MB`;
 
   return (
     <div className="space-y-4">
@@ -75,18 +79,23 @@ const DocumentAnalysis = ({ document }: DocumentAnalysisProps) => {
         </TabsContent>
 
         <TabsContent value="stats" className="mt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="p-6 text-center bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <Card className="p-5 text-center bg-primary text-primary-foreground shadow-sm">
               <div className="text-4xl font-bold mb-2">{approxPages}</div>
               <div className="text-sm opacity-90">Estimated pages</div>
             </Card>
-            <Card className="p-6 text-center bg-gradient-to-br from-pink-500 to-red-500 text-white shadow-lg">
+            <Card className="p-5 text-center bg-foreground text-background shadow-sm">
               <div className="text-4xl font-bold mb-2">{words.toLocaleString()}</div>
               <div className="text-sm opacity-90">Words</div>
             </Card>
-            <Card className="p-6 text-center bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg">
+            <Card className="p-5 text-center bg-accent text-accent-foreground shadow-sm">
               <div className="text-4xl font-bold mb-2">{characters.toLocaleString()}</div>
               <div className="text-sm opacity-90">Characters</div>
+            </Card>
+            <Card className="p-5 text-center bg-card shadow-sm">
+              <FileArchive className="mx-auto mb-2 h-7 w-7 text-primary" />
+              <div className="text-3xl font-bold mb-2">{fileSize}</div>
+              <div className="text-sm text-muted-foreground">File size</div>
             </Card>
           </div>
         </TabsContent>

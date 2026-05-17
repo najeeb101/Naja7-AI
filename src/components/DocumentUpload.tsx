@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, FileText, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { extractDocumentText, supportedDocumentLabel, validateDocumentFile } from "@/lib/documentText";
+import {
+  extractDocumentText,
+  maxDocumentFileSizeLabel,
+  supportedDocumentLabel,
+  validateDocumentFile,
+} from "@/lib/documentText";
 
 interface DocumentUploadProps {
   isSessionReady: boolean;
@@ -16,6 +21,7 @@ const DocumentUpload = ({ isSessionReady, onDocumentUploaded }: DocumentUploadPr
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -86,6 +92,7 @@ const DocumentUpload = ({ isSessionReady, onDocumentUploaded }: DocumentUploadPr
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    if (isUploading || !isSessionReady) return;
     setIsDragging(true);
   };
 
@@ -96,13 +103,21 @@ const DocumentUpload = ({ isSessionReady, onDocumentUploaded }: DocumentUploadPr
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    if (isUploading || !isSessionReady) return;
     handleFileUpload(e.dataTransfer.files);
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(e.target.files);
+    e.target.value = "";
+  };
+
+  const isDisabled = !isSessionReady || isUploading;
 
   return (
     <Card
       className={`p-8 border-2 border-dashed transition-all ${
-        isDragging ? "border-primary bg-secondary/50" : "border-border"
+        isDragging && !isDisabled ? "border-primary bg-secondary/60 shadow-md" : "border-border bg-card"
       }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -120,10 +135,10 @@ const DocumentUpload = ({ isSessionReady, onDocumentUploaded }: DocumentUploadPr
             <div>
               <h3 className="text-lg font-semibold mb-2">Upload Your Contract</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Drag and drop your file here, or click to browse
+                Drop a readable contract file here, or choose one from your device.
               </p>
               <p className="text-xs text-muted-foreground">
-                Supports: {supportedDocumentLabel} contracts (Max 5MB)
+                Supports {supportedDocumentLabel}. Maximum size: {maxDocumentFileSizeLabel}.
               </p>
             </div>
             {uploadError && (
@@ -132,19 +147,18 @@ const DocumentUpload = ({ isSessionReady, onDocumentUploaded }: DocumentUploadPr
                 <AlertDescription>{uploadError}</AlertDescription>
               </Alert>
             )}
-            <Button asChild disabled={!isSessionReady}>
-              <label className="cursor-pointer">
-                <FileText className="mr-2 h-4 w-4" />
-                {isSessionReady ? "Select File" : "Preparing session"}
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => handleFileUpload(e.target.files)}
-                  accept=".txt,.pdf,.docx"
-                  disabled={!isSessionReady}
-                />
-              </label>
+            <Button type="button" disabled={isDisabled} onClick={() => fileInputRef.current?.click()}>
+              <FileText className="mr-2 h-4 w-4" />
+              {isSessionReady ? "Select Contract" : "Preparing session"}
             </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleInputChange}
+              accept=".txt,.pdf,.docx"
+              disabled={isDisabled}
+            />
           </>
         )}
       </div>

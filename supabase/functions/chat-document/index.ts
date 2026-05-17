@@ -79,7 +79,7 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You answer questions about one uploaded contract for a portfolio demo. Use only the provided document text and prior analysis. If the answer is not in the document, say that clearly. Do not provide legal advice.",
+              "You answer questions about one uploaded contract for a portfolio demo. Use only the provided document text and prior analysis. If the answer is not in the document, say that clearly and suggest what clause the user should look for. Keep answers concise, quote only short phrases when useful, and do not provide legal advice.",
           },
           {
             role: "user",

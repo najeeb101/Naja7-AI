@@ -73,7 +73,7 @@ npm run lint
 Manual checks:
 
 - TXT, PDF, and DOCX uploads extract readable text.
-- Unsupported files and files over 5MB are rejected.
+- Unsupported files and files over 10MB are rejected.
 - Empty, scanned, encrypted, or unreadable files show helpful errors.
 - Analysis moves through pending, completed, or failed states.
 - Chat only works after selecting an analyzed document.

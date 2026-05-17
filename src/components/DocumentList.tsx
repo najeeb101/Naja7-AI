@@ -121,9 +121,11 @@ const DocumentList = ({ isSessionReady, refreshTrigger, onDocumentSelect }: Docu
     return (
       <Card className="p-8 text-center">
         <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <p className="font-medium">No documents uploaded yet</p>
+        <p className="font-medium">{isSessionReady ? "No documents uploaded yet" : "Preparing your workspace"}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload a TXT, PDF, or DOCX contract to generate your first review.
+          {isSessionReady
+            ? "Upload a TXT, PDF, or DOCX contract to generate your first review."
+            : "Your private demo session will appear here once it is ready."}
         </p>
       </Card>
     );
@@ -146,7 +148,7 @@ const DocumentList = ({ isSessionReady, refreshTrigger, onDocumentSelect }: Docu
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold truncate">{doc.filename}</h3>
                   <p className="text-xs text-muted-foreground">
-                    {formatFileSize(doc.file_size)} - {new Date(doc.created_at).toLocaleDateString()}
+                    {formatFileSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>

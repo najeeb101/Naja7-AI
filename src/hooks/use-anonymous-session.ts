@@ -11,33 +11,41 @@ export const useAnonymousSession = () => {
     let isMounted = true;
 
     const ensureSession = async () => {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (sessionError) {
-        setAuthError(sessionError.message);
-        setIsAuthReady(true);
-        return;
+        if (sessionError) {
+          setAuthError(sessionError.message);
+          setIsAuthReady(true);
+          return;
+        }
+
+        if (sessionData.session?.user) {
+          setUser(sessionData.session.user);
+          setIsAuthReady(true);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signInAnonymously();
+
+        if (!isMounted) return;
+
+        if (error) {
+          setAuthError(error.message);
+        } else {
+          setUser(data.user);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+
+        setAuthError(error instanceof Error ? error.message : "Could not connect to Supabase.");
+      } finally {
+        if (isMounted) {
+          setIsAuthReady(true);
+        }
       }
-
-      if (sessionData.session?.user) {
-        setUser(sessionData.session.user);
-        setIsAuthReady(true);
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signInAnonymously();
-
-      if (!isMounted) return;
-
-      if (error) {
-        setAuthError(error.message);
-      } else {
-        setUser(data.user);
-      }
-
-      setIsAuthReady(true);
     };
 
     ensureSession();

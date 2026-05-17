@@ -23,6 +23,9 @@ SET analysis_status = CASE
   ELSE analysis_status
 END;
 
+CREATE INDEX IF NOT EXISTS documents_user_created_at_idx
+ON public.documents (user_id, created_at DESC);
+
 DROP POLICY IF EXISTS "Anyone can view documents" ON public.documents;
 DROP POLICY IF EXISTS "Anyone can create documents" ON public.documents;
 DROP POLICY IF EXISTS "Anyone can update documents" ON public.documents;

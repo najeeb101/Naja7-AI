@@ -35,7 +35,7 @@ const Index = () => {
       <Navigation />
       <Hero />
 
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
+      <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-7xl">
           {authError && (
             <Alert variant="destructive" className="mb-6">
@@ -43,6 +43,7 @@ const Index = () => {
               <AlertTitle>Demo session unavailable</AlertTitle>
               <AlertDescription>
                 Anonymous access is required for uploads. Check Supabase anonymous auth settings.
+                {authError ? ` Details: ${authError}` : ""}
               </AlertDescription>
             </Alert>
           )}
@@ -54,7 +55,16 @@ const Index = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-normal">Contract workspace</h2>
+              <p className="text-sm text-muted-foreground">
+                Your uploads stay tied to this anonymous browser session.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
               <DocumentUpload isSessionReady={canUseDemo} onDocumentUploaded={handleDocumentUploaded} />
               <DocumentList

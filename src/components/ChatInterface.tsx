@@ -20,6 +20,12 @@ interface ChatInterfaceProps {
   } | null;
 }
 
+const suggestedQuestions = [
+  "What are the biggest risks?",
+  "What obligations should I track?",
+  "Are there unusual termination terms?",
+];
+
 const ChatInterface = ({ document }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -30,7 +36,9 @@ const ChatInterface = ({ document }: ChatInterfaceProps) => {
     setInput("");
   }, [document?.id]);
 
-  const handleSend = async () => {
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+
     if (!input.trim()) return;
 
     if (!document) {
@@ -85,7 +93,7 @@ const ChatInterface = ({ document }: ChatInterfaceProps) => {
       <div className="p-4 border-b flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-primary" />
         <div className="min-w-0">
-          <h3 className="font-semibold">Chat with AI</h3>
+          <h3 className="font-semibold">Document Chat</h3>
           {document && <p className="truncate text-xs text-muted-foreground">{document.filename}</p>}
         </div>
       </div>
@@ -134,19 +142,35 @@ const ChatInterface = ({ document }: ChatInterfaceProps) => {
       </ScrollArea>
 
       <div className="p-4 border-t">
-        <div className="flex gap-2">
+        <div className="mb-3 flex flex-wrap gap-2">
+          {suggestedQuestions.map((question) => (
+            <Button
+              key={question}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-auto whitespace-normal text-left text-xs"
+              disabled={!canChat || isLoading}
+              onClick={() => setInput(question)}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+
+        <form className="flex gap-2" onSubmit={handleSend}>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder={canChat ? "Ask questions about the document..." : "Select an analyzed document first"}
             className="flex-1"
+            maxLength={500}
             disabled={!canChat || isLoading}
           />
-          <Button onClick={handleSend} size="icon" disabled={!input.trim() || !canChat || isLoading}>
+          <Button type="submit" size="icon" disabled={!input.trim() || !canChat || isLoading}>
             <Send className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
       </div>
     </Card>
   );

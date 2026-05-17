@@ -4,12 +4,14 @@ import mammoth from "mammoth/mammoth.browser";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ["txt", "pdf", "docx"] as const;
 
 export type SupportedDocumentExtension = (typeof SUPPORTED_EXTENSIONS)[number];
 
 export const supportedDocumentLabel = "TXT, PDF, DOCX";
+export const maxDocumentFileSizeLabel = `${MAX_FILE_SIZE_MB}MB`;
 
 const getExtension = (filename: string) => filename.split(".").pop()?.toLowerCase() ?? "";
 
@@ -18,7 +20,7 @@ export const isSupportedDocument = (file: File) =>
 
 export const validateDocumentFile = (file: File) => {
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error("File size must be less than 5MB.");
+    throw new Error(`File size must be less than ${MAX_FILE_SIZE_MB}MB.`);
   }
 
   if (!isSupportedDocument(file)) {

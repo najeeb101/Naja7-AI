@@ -9,7 +9,7 @@ This is a scanning and summarization tool for demos. It is not legal advice.
 - Vite, React, TypeScript
 - Tailwind CSS and shadcn-ui
 - Supabase Auth, Postgres, RLS, and Edge Functions
-- Lovable AI Gateway with `google/gemini-2.5-flash`
+- Google Gemini (`gemini-2.5-flash`) through its OpenAI-compatible API (the Lovable AI Gateway still works as a fallback)
 - `pdfjs-dist` and `mammoth` for browser document text extraction
 
 ## Local Setup
@@ -35,7 +35,7 @@ Apply the migrations in `supabase/migrations`.
 Set Edge Function secrets:
 
 ```sh
-supabase secrets set LOVABLE_API_KEY=your_lovable_ai_gateway_key
+supabase secrets set GEMINI_API_KEY=your_gemini_api_key
 ```
 
 Deploy functions:
@@ -58,7 +58,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 After deployment, update the portfolio project entry with:
 
-- GitHub: `https://github.com/najeeb101/aixnew`
+- GitHub: `https://github.com/najeeb101/Naja7-AI`
 - Live: your Vercel deployment URL
 
 ## Verification

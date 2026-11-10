@@ -62,19 +62,26 @@ serve(async (req) => {
       return jsonResponse({ error: "Document analysis is not complete yet." }, 409);
     }
 
+    // Prefer Gemini directly; fall back to the Lovable AI Gateway if only that key is set.
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const aiKey = GEMINI_API_KEY ?? LOVABLE_API_KEY;
+    if (!aiKey) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
+    const aiUrl = GEMINI_API_KEY
+      ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiModel = GEMINI_API_KEY ? "gemini-2.5-flash" : "google/gemini-2.5-flash";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(aiUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${aiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: aiModel,
         messages: [
           {
             role: "system",

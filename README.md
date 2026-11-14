@@ -9,7 +9,7 @@ This is a scanning and summarization tool for demos. It is not legal advice.
 - Vite, React, TypeScript
 - Tailwind CSS and shadcn-ui
 - Supabase Auth, Postgres, RLS, and Edge Functions
-- Google Gemini (`gemini-2.5-flash`) through its OpenAI-compatible API (the Lovable AI Gateway still works as a fallback)
+- Google Gemini (`gemini-2.5-flash`) called directly from the Edge Functions through its OpenAI-compatible API (model name lives in `supabase/functions/_shared/gemini.ts`)
 - `pdfjs-dist` and `mammoth` for browser document text extraction
 
 ## Local Setup
@@ -24,13 +24,14 @@ Create a `.env` file with:
 ```sh
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+VITE_SUPABASE_PROJECT_ID=your_supabase_project_ref
 ```
 
 Anonymous sign-ins must be enabled in Supabase Auth because the demo has no visible login screen.
 
 ## Supabase Setup
 
-Apply the migrations in `supabase/migrations`.
+Apply the migrations in `supabase/migrations` and enable **Anonymous Sign-Ins** in Auth settings (a dashboard setting, not part of the migrations). The tables live in the `public.documents` table; use a dedicated Supabase project, since anonymous sign-ins are project-wide.
 
 Set Edge Function secrets:
 
@@ -54,6 +55,7 @@ Deploy the Vite app to Vercel and add these environment variables:
 ```sh
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+VITE_SUPABASE_PROJECT_ID=your_supabase_project_ref
 ```
 
 After deployment, update the portfolio project entry with:

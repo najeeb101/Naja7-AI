@@ -9,7 +9,7 @@ This is a scanning and summarization tool for demos. It is not legal advice.
 - Vite, React, TypeScript
 - Tailwind CSS and shadcn-ui
 - Supabase Auth, Postgres, RLS, and Edge Functions
-- Google Gemini (`gemini-2.5-flash`) called directly from the Edge Functions through its OpenAI-compatible API (model name lives in `supabase/functions/_shared/gemini.ts`)
+- Groq (`openai/gpt-oss-120b`) called directly from the Edge Functions through its OpenAI-compatible API (model name and request-size caps live in `supabase/functions/_shared/llm.ts`)
 - `pdfjs-dist` and `mammoth` for browser document text extraction
 
 ## Local Setup
@@ -31,12 +31,12 @@ Anonymous sign-ins must be enabled in Supabase Auth because the demo has no visi
 
 ## Supabase Setup
 
-Apply the migrations in `supabase/migrations` and enable **Anonymous Sign-Ins** in Auth settings (a dashboard setting, not part of the migrations). The tables live in the `public.documents` table; use a dedicated Supabase project, since anonymous sign-ins are project-wide.
+Apply the migrations in `supabase/migrations` and enable **Anonymous Sign-Ins** in Auth settings (a dashboard setting, not part of the migrations). this can share a project with other apps (table `public.documents` and function `public.update_updated_at_column` must not already exist), but anonymous sign-ins are enabled project-wide.
 
 Set Edge Function secrets:
 
 ```sh
-supabase secrets set GEMINI_API_KEY=your_gemini_api_key
+supabase secrets set GROQ_API_KEY=your_groq_api_key
 ```
 
 Deploy functions:
@@ -45,6 +45,8 @@ Deploy functions:
 supabase functions deploy analyze-document
 supabase functions deploy chat-document
 ```
+
+Documents longer than 12,000 characters are truncated before analysis (Groq free-tier tokens-per-minute limit) and the saved analysis says so.
 
 The functions require JWT verification and use the caller's anonymous session so each visitor can only access their own documents.
 

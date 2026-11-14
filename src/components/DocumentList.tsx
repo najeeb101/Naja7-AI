@@ -51,7 +51,7 @@ const DocumentList = ({ isSessionReady, refreshTrigger, onDocumentSelect }: Docu
       console.error("Error fetching documents:", error);
       toast.error("Failed to load documents");
     } else {
-      setDocuments(data || []);
+      setDocuments((data || []) as Document[]);
     }
     setIsLoading(false);
   }, [isSessionReady]);

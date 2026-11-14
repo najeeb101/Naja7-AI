@@ -77,7 +77,8 @@ serve(async (req) => {
       },
     ], 800);
 
-    return jsonResponse({ answer: answer || "I could not find a clear answer in this document." });
+    const cleaned = String(answer ?? "").replace(/【[^】]*】/g, "").trim();
+    return jsonResponse({ answer: cleaned || "I could not find a clear answer in this document." });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in chat-document function:", message);

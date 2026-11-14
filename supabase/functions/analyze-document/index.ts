@@ -87,11 +87,13 @@ serve(async (req) => {
       throw new Error("AI returned an empty analysis.");
     }
 
+    const cleanedAnalysis = rawAnalysis.replace(/【[^】]*】/g, "").trim();
+
     const analysis = wasTruncated
       ? `> Note: this document is longer than the demo limit, so only the first ${MAX_ANALYZE_CHARS.toLocaleString("en-US")} of ${content.length.toLocaleString("en-US")} characters were analyzed.
 
-${rawAnalysis}`
-      : rawAnalysis;
+${cleanedAnalysis}`
+      : cleanedAnalysis;
 
     const { error: updateError } = await supabase
       .from("documents")

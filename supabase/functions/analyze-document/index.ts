@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callGemini } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,56 +70,17 @@ serve(async (req) => {
       .update({ analysis_status: "pending", analysis_error: null })
       .eq("id", documentId);
 
-    // Prefer Gemini directly; fall back to the Lovable AI Gateway if only that key is set.
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const aiKey = GEMINI_API_KEY ?? LOVABLE_API_KEY;
-    if (!aiKey) {
-      throw new Error("GEMINI_API_KEY is not configured");
-    }
-    const aiUrl = GEMINI_API_KEY
-      ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-      : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiModel = GEMINI_API_KEY ? "gemini-2.5-flash" : "google/gemini-2.5-flash";
-
-    const response = await fetch(aiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${aiKey}`,
-        "Content-Type": "application/json",
+    const analysis = await callGemini([
+      {
+        role: "system",
+        content:
+          "You are Naja7, a careful contract review assistant for a portfolio demo. Analyze contract text in plain English using only the provided text. Always include sections titled: Summary, Key Clauses, Potential Risks, Important Dates or Obligations, Suggested Review Questions, and Not Legal Advice. Mention uncertainty when text is missing or unclear. Prefer practical bullet points, cite short phrases from the contract when helpful, and avoid claiming to be a lawyer.",
       },
-      body: JSON.stringify({
-        model: aiModel,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Naja7, a careful contract review assistant for a portfolio demo. Analyze contract text in plain English using only the provided text. Always include sections titled: Summary, Key Clauses, Potential Risks, Important Dates or Obligations, Suggested Review Questions, and Not Legal Advice. Mention uncertainty when text is missing or unclear. Prefer practical bullet points, cite short phrases from the contract when helpful, and avoid claiming to be a lawyer.",
-          },
-          {
-            role: "user",
-            content: `Analyze this contract named "${filename}". Use only the text below.\n\n${content.substring(0, 14000)}`,
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
-      }
-      if (response.status === 402) {
-        throw new Error("Payment required. Please add credits to continue.");
-      }
-
-      throw new Error("AI gateway error.");
-    }
-
-    const data = await response.json();
-    const analysis = data.choices?.[0]?.message?.content?.trim();
+      {
+        role: "user",
+        content: `Analyze this contract named "${filename}". Use only the text below.\n\n${content.substring(0, 14000)}`,
+      },
+    ]);
 
     if (!analysis) {
       throw new Error("AI returned an empty analysis.");

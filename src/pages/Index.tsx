@@ -42,7 +42,7 @@ const Index = () => {
               <ShieldAlert className="h-4 w-4" />
               <AlertTitle>Demo session unavailable</AlertTitle>
               <AlertDescription>
-                Anonymous access is required for uploads. Check Supabase anonymous auth settings.
+                The demo backend is unreachable or not configured. Check the Supabase URL, key and anonymous sign-in setting.
                 {authError ? ` Details: ${authError}` : ""}
               </AlertDescription>
             </Alert>

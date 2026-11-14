@@ -2,8 +2,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Placeholders keep the app rendering (and showing a clear error) when env vars are missing,
+// instead of createClient throwing at import time and leaving a blank page.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://backend-not-configured.invalid";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "backend-not-configured";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

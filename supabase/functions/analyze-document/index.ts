@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callGemini } from "../_shared/gemini.ts";
+import { callLLM, MAX_ANALYZE_CHARS } from "../_shared/llm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,7 +70,8 @@ serve(async (req) => {
       .update({ analysis_status: "pending", analysis_error: null })
       .eq("id", documentId);
 
-    const analysis = await callGemini([
+    const wasTruncated = content.length > MAX_ANALYZE_CHARS;
+    const rawAnalysis = await callLLM([
       {
         role: "system",
         content:
@@ -78,13 +79,19 @@ serve(async (req) => {
       },
       {
         role: "user",
-        content: `Analyze this contract named "${filename}". Use only the text below.\n\n${content.substring(0, 14000)}`,
+        content: `Analyze this contract named "${filename}". Use only the text below.\n\n${content.substring(0, MAX_ANALYZE_CHARS)}`,
       },
-    ]);
+    ], 2000);
 
-    if (!analysis) {
+    if (!rawAnalysis) {
       throw new Error("AI returned an empty analysis.");
     }
+
+    const analysis = wasTruncated
+      ? `> Note: this document is longer than the demo limit, so only the first ${MAX_ANALYZE_CHARS.toLocaleString("en-US")} of ${content.length.toLocaleString("en-US")} characters were analyzed.
+
+${rawAnalysis}`
+      : rawAnalysis;
 
     const { error: updateError } = await supabase
       .from("documents")

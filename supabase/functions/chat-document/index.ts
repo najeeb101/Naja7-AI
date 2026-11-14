@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callGemini } from "../_shared/gemini.ts";
+import { callLLM, MAX_CHAT_ANALYSIS_CHARS, MAX_CHAT_DOC_CHARS } from "../_shared/llm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,7 +63,7 @@ serve(async (req) => {
       return jsonResponse({ error: "Document analysis is not complete yet." }, 409);
     }
 
-    const answer = await callGemini([
+    const answer = await callLLM([
       {
         role: "system",
         content:
@@ -71,11 +71,11 @@ serve(async (req) => {
       },
       {
         role: "user",
-        content: `Document: ${document.filename}\n\nAnalysis:\n${document.analysis ?? ""}\n\nText:\n${String(
+        content: `Document: ${document.filename}\n\nAnalysis:\n${String(document.analysis ?? "").substring(0, MAX_CHAT_ANALYSIS_CHARS)}\n\nText:\n${String(
           document.content ?? "",
-        ).substring(0, 12000)}\n\nQuestion: ${String(question).trim()}`,
+        ).substring(0, MAX_CHAT_DOC_CHARS)}\n\nQuestion: ${String(question).trim()}`,
       },
-    ]);
+    ], 800);
 
     return jsonResponse({ answer: answer || "I could not find a clear answer in this document." });
   } catch (error) {
